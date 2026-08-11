@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: dark --default;
+}
+
+/* Flat look: drop daisyUI's "depth" effects (white inset highlights, border
+   darkening and text shadows on buttons/inputs) so controls don't get a white
+   outline on the dark theme. Outline buttons keep their border — that border
+   is their selection state. */
+:host {
+  --depth: 0;
+  --noise: 0;
+}
+
+.input,
+.textarea,
+.select {
+  border-color: transparent;
+  box-shadow: none;
+}
