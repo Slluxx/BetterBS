@@ -2,7 +2,7 @@
   "name": "BetterBS",
   "description": "BetterBS turns the outdated page into a fresh new design with many QOL features.",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "wxt",
