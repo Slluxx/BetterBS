@@ -10,13 +10,13 @@
 //   - the URL unchanged, if it is already in embed form
 //   - null, if the hoster has no rule (caller falls back to "open in new tab")
 
-function withPath(url, transform) {
+function withPath(url, transform, targetHost) {
     try {
         const u = new URL(url)
         const next = transform(u.pathname)
         if (!next) return null
-        if (next === u.pathname) return u.href
-        u.pathname = next
+        if (next !== u.pathname) u.pathname = next
+        if (targetHost) u.host = targetHost
         return u.href
     } catch {
         return null
@@ -37,9 +37,11 @@ const RULES = [
     {
         name: 'vidmoly',
         host: /vidmoly/i,
+        targetHost: 'vidmoly.org',
         path: (p) => {
             if (/^\/embed-/.test(p)) return p
-            return p.replace(/([^/]+\.html)$/, 'embed-$1')
+            const id = p.replace(/^\/[a-z]\//, '').replace(/\.html$/, '')
+            return `/embed-${id}.html`
         },
     },
     {
@@ -108,7 +110,7 @@ export function toEmbedUrl(url) {
         return null
     }
 
-    const result = withPath(normalized, rule.path)
+    const result = withPath(normalized, rule.path, rule.targetHost)
     console.log(`[embed] ${rule.name}: ${normalized} -> ${result ?? '(cannot embed — open in new tab)'}`)
     return result
 }
