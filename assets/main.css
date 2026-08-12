@@ -18,3 +18,22 @@
   border-color: transparent;
   box-shadow: none;
 }
+
+.carousel__next,
+.carousel__prev {
+  background: rgba(0, 0, 0, 0.562)!important;
+  border-radius: 50%!important;
+  width: 40px!important;
+  height: 40px!important;
+  color: white!important;
+}
+
+.carousel__next:hover,
+.carousel__prev:hover {
+  color: #e5e5e5!important;
+}
+
+.carousel__next--disabled,
+.carousel__prev--disabled {
+  opacity: 0.3!important;
+}
