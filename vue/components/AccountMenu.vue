@@ -25,7 +25,9 @@ defineEmits(['open-settings'])
             <li><a @click="session.logout">Abmelden</a></li>
         </ul>
     </div>
+
     <template v-else>
+        <!--
         <button class="btn btn-ghost btn-circle" @click="$emit('open-settings')" title="Einstellungen">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -34,6 +36,7 @@ defineEmits(['open-settings'])
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
         </button>
+        -->
         <button class="btn btn-ghost" @click="session.openLogin()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:hidden" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
