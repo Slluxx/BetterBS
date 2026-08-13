@@ -9,11 +9,12 @@
             <div ref="scroller" class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
                 <div v-for="p in posts" :key="p.id" class="chat"
                     :class="p.user === session.username ? 'chat-end' : 'chat-start'">
-                    <div class="chat-header opacity-60">
-                        {{ p.user }}
+                    <div :class="['chat-header', 'opacity-80']">
+                        <span :class="[{ 'text-blue-400': p.rank === 'mod', 'text-purple-400': p.rank === 'cmod','text-green-400': p.rank === 'smod', 'text-red-400': p.rank === 'admin' }]">{{ p.user }}</span>
+                        <span v-if="p.rank !== 'user'"> ({{ p.rank }})</span>
                         <time class="text-xs">{{ p.time }}</time>
                     </div>
-                    <div :class="['chat-bubble', { 'bg-blue-400': p.rank === 'mod', 'bg-orange-400': p.rank === 'admin' }]"  v-html="formatText(p.text)"></div>
+                    <div class="chat-bubble"  v-html="formatText(p.text)"></div>
                 </div>
                 <p v-if="!posts.length && !loading" class="text-center text-sm opacity-50 py-8">
                     Keine Nachrichten
