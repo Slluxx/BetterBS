@@ -13,7 +13,7 @@
                         {{ p.user }}
                         <time class="text-xs">{{ p.time }}</time>
                     </div>
-                    <div class="chat-bubble" v-html="formatText(p.text)"></div>
+                    <div :class="['chat-bubble', { 'bg-blue-400': p.rank === 'mod', 'bg-orange-400': p.rank === 'admin' }]"  v-html="formatText(p.text)"></div>
                 </div>
                 <p v-if="!posts.length && !loading" class="text-center text-sm opacity-50 py-8">
                     Keine Nachrichten
