@@ -18,8 +18,10 @@ der einfach nicht nervt. Installieren, fertig. 🎉
 
 </br>
 
+> [!NOTE]
 > 🔒 **Deine Daten bleiben deine Daten.** BetterBS läuft komplett lokal in deinem Browser.
 > Es werden niemals Daten an Dritte gesendet — alles bleibt zwischen dir und BS.
+
 </br>
 
 
