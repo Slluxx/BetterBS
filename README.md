@@ -40,7 +40,7 @@ der einfach nicht nervt. Installieren, fertig. 🎉
 | ❤️ **Favoriten & Verlauf** | Nie wieder die Folge verlieren, bei der man aufgehört hat. |
 | 💬 **Live-Chat** | Direkt eingebaut, ohne die Seite zu verlassen. |
 | 📱 **Funktioniert überall** | Vom großen Monitor bis zum kleinen Laptop-Fenster. |
-
+| | |
 
 
 ## 🌐 Unterstützte Seiten
