@@ -10,12 +10,12 @@ der einfach nicht nervt. Installieren, fertig. 🎉
 </br>
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/fhhfodhjkllgbgnhppeiegpfafibfegb"><img src="https://img.shields.io/badge/Chrome-Jetzt%20installieren-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Für Chrome installieren"></a>
-  <a href="https://addons.mozilla.org/de/firefox/addon/betterbs/"><img src="https://img.shields.io/badge/Firefox-Jetzt%20installieren-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white" alt="Für Firefox installieren"></a>
-  <br>
-  <img src="https://img.shields.io/chrome-web-store/v/fhhfodhjkllgbgnhppeiegpfafibfegb?style=flat-square" alt="Chrome Web Store Version">
-  <img src="https://img.shields.io/amo/v/%40betterbs?style=flat-square" alt="Mozilla Add-on Version">
+  <a href="https://chromewebstore.google.com/detail/fhhfodhjkllgbgnhppeiegpfafibfegb"><img src="https://img.shields.io/chrome-web-store/v/fhhfodhjkllgbgnhppeiegpfafibfegb?style=for-the-badge&label=" alt="Chrome Web Store Version"></a>
 </p>
-
+<p align="center">
+  <a href="https://addons.mozilla.org/de/firefox/addon/betterbs/"><img src="https://img.shields.io/badge/Firefox-Jetzt%20installieren-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white" alt="Für Firefox installieren"></a>
+  <a href="https://addons.mozilla.org/de/firefox/addon/betterbs/"><img src="https://img.shields.io/amo/v/betterbs?style=for-the-badge&label=" alt="Mozilla Add-on Version"></a>
+</p>
 </br>
 
 > [!NOTE]
