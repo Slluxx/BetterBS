@@ -225,11 +225,15 @@ function recordVisit() {
     )
 }
 
-async function loadEpisodes() {
+// `force` re-reads the season page instead of taking the cached list. The cache
+// is the whole reason a freshly watched episode can still look unwatched: the
+// site's player page marks it seen as a side effect of our own request for the
+// stream, and nothing here would otherwise throw our stale copy away.
+async function loadEpisodes(force = false) {
     if (!title.value) return
     const { slug, season } = { slug: title.value, season: currentSeason.value }
     try {
-        await site.loadEpisodes({ slug, season, language: currentLanguage.value })
+        await site.loadEpisodes({ slug, season, language: currentLanguage.value }, { force })
         // Asking for a dub this season doesn't have does not fail — the site
         // answers with that season's default instead, so what came back may not
         // be the dub we asked for. Adopt the language actually served and load
@@ -238,7 +242,9 @@ async function loadEpisodes() {
         const served = site.servedLanguage(slug, season, currentLanguage.value)
         if (served && served !== currentLanguage.value) {
             currentLanguage.value = served
-            await site.loadEpisodes({ slug, season, language: served })
+            // Forced too: a list cached under the served language would
+            // otherwise be adopted here, still carrying the pre-watch markers.
+            await site.loadEpisodes({ slug, season, language: served }, { force })
         }
     } catch {
         // error is surfaced through site.error
@@ -369,8 +375,14 @@ function selectLanguage(code) {
     router.replace({ query: { ...route.query, lang: code } })
 }
 
-function backToOverview() {
-    go('')
+// Back to the episode list of the season that was just playing. The season has
+// to stay in the route: dropping it (as `go('')` did) left the watcher above
+// reading `Number(undefined || 1)`, which reset the view to season 1 and
+// reloaded it. Re-read the list afterwards so the episode just watched is
+// marked seen, the same way a page refresh would, without the reload.
+async function backToOverview() {
+    go(`/${currentSeason.value}`)
+    await loadEpisodes(true)
 }
 
 function selectEpisode(n) {

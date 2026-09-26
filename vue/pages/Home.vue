@@ -111,12 +111,12 @@ const episodes = computed(() =>
         episodeTitle: '',
         season: e.season,
         episode: e.episode,
-        // No language badge here. It used to carry the site's full label
-        // ("Deutsch") while the other tiles showed the bare code ("DE"); one
-        // display is used now, and the remaining ones are the short code on
-        // "Zuletzt angesehen" and the notification bar. The link still opens the
-        // dub advertised here.
-        language: '',
+        // The short code, not the site's full label ("Deutsch"): this is the dub
+        // the tile's own link below opens, so the badge and the destination
+        // agree, and it matches how the other tiles badge a language. Uppercased
+        // for display only — the site matches its codes case-sensitively, so the
+        // real one still goes into the link. Empty when the href carried none.
+        language: e.languageCode ? e.languageCode.toUpperCase() : '',
 
         image: site.covers[e.slug] || 'https://placehold.co/300x450',
         // …but the link opens the dub the site is advertising here, so the tile
