@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import StreamLoader from '@/utils/Streamloader.js'
 import { toEmbedUrl } from '@/utils/embed.js'
+import { log, error as logError } from '@/utils/log.js'
 
 // Hoster players sometimes hand back http:// stream links; the iframe lives on
 // an https page, so such links would be blocked as mixed content.
@@ -30,7 +31,7 @@ export const usePlayerStore = defineStore('player', {
     actions: {
         async loadStream({ url, hoster }) {
             const id = ++requestId
-            console.log('[player] loadStream', { url, hoster })
+            log('[player] loadStream', { url, hoster })
             this.loading = true
             this.error = null
             this.result = null
@@ -41,25 +42,25 @@ export const usePlayerStore = defineStore('player', {
 
             try {
                 const playerUrl = new URL(`${url}/${hoster}`).href
-                console.log('[player] player page URL', playerUrl)
+                log('[player] player page URL', playerUrl)
                 const result = await StreamLoader.load(playerUrl)
                 if (id !== requestId) {
-                    console.log('[player] result superseded by a newer request')
+                    log('[player] result superseded by a newer request')
                     return
                 }
                 const link = forceHttps(result?.link)
                 this.result = { ...result, link }
                 this.embedUrl = result?.embed === '1' ? link : toEmbedUrl(link)
                 if (this.embedUrl) {
-                    console.log('[player] embeddable link', this.embedUrl)
+                    log('[player] embeddable link', this.embedUrl)
                 } else {
-                    console.log('[player] link cannot be embedded, offering open-in-new-tab', link)
+                    log('[player] link cannot be embedded, offering open-in-new-tab', link)
                 }
-                console.log('[player] stream ready', { ...result, link })
+                log('[player] stream ready', { ...result, link })
             } catch (e) {
                 if (id !== requestId) return
                 this.error = e?.message || String(e)
-                console.error('[player] stream failed:', this.error)
+                logError('[player] stream failed:', this.error)
             } finally {
                 if (id === requestId) this.loading = false
             }

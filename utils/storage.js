@@ -166,45 +166,48 @@ export function remove(key) {
     persistMeta()
 }
 
-// ---- one-time diagnostic -------------------------------------------------
-// Verifies each storage backend works AND that data written on a previous
-// page load survives. The "persisted-across-reload" flags read a probe that a
-// previous load of this page wrote — so on the very first load they report
-// "first load", and from the second load on they show yes/no.
-(async () => {
-    const probe = '__bs_persist_probe__'
-    const report = {}
+// Every key this extension owns. Matched by shape rather than listed, so keys
+// left behind by older builds (`bs_new_episodes`, before the v2 rewrite) are
+// swept up too — a leftover from a previous schema is exactly the kind of
+// inconsistency a wipe has to remove.
+function isOwnedKey(key) {
+    return key === 'recentlyVisited' || key.startsWith('bs_') || key.startsWith('__bs_')
+}
 
+function localKeys() {
     try {
-        const before = localStorage.getItem(probe)
-        localStorage.setItem(probe, '1')
-        const after = localStorage.getItem(probe)
-        report.localStorage = after === '1' ? 'ok' : 'write-dropped'
-        report.localStoragePersistedAcrossReload = before === '1'
-            ? 'yes'
-            : 'first load'
-    } catch (e) {
-        report.localStorage = `error: ${e?.message || e}`
-        report.localStoragePersistedAcrossReload = 'n/a'
+        return Object.keys(localStorage)
+    } catch {
+        return []
     }
+}
 
+// Wipes every trace of this extension from BOTH backends.
+//
+// This is deliberately total rather than selective. The point of the button is
+// to get back to a known-empty state, and a partial clear that misses one key
+// would leave the two backends free to disagree again — which is the failure
+// this exists to fix. The localStorage mirror only has the extension's own keys
+// removed; the site's own storage is left alone, because that is not ours to
+// delete.
+export async function clearAll() {
+    cache.clear()
+    for (const key of localKeys()) {
+        if (isOwnedKey(key)) clearLocal(key)
+    }
     if (backend) {
-        try {
-            const before = await backend.get(probe)
-            await backend.set({ [probe]: 1 })
-            const after = await backend.get(probe)
-            report.extensionStorage = after[probe] === 1 ? 'ok' : 'write-dropped'
-            report.extensionStoragePersistedAcrossReload = before[probe] === 1
-                ? 'yes'
-                : 'first load'
-        } catch (e) {
-            report.extensionStorage = `error: ${e?.message || e}`
-            report.extensionStoragePersistedAcrossReload = 'n/a'
-        }
+        // storage.local belongs to this extension alone, so emptying it is safe
+        // and is the only way to be sure nothing is left behind. It goes through
+        // the write chain so any write still queued from earlier lands first and
+        // cannot put a key back straight after the wipe.
+        writeChain = writeChain
+            .then(() => backend.clear())
+            .catch(() => { })
+        await writeChain
     } else {
-        report.extensionStorage = 'unavailable (no chrome/browser storage API)'
-        report.extensionStoragePersistedAcrossReload = 'n/a'
+        // No extension backend: nothing else to wait for, but keep the mirror and
+        // the cache in step.
+        await writeChain
     }
+}
 
-    console.log('[BetterBS storage] backend check:', JSON.stringify(report))
-})()

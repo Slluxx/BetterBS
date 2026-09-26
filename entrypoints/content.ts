@@ -34,18 +34,6 @@ export default defineContentScript({
   runAt: 'document_idle',
 
   main() {
-    console.log('EXTENSION INJECT')
-
-    // ---- TEMP DIAGNOSTIC: fullscreen debugging. Remove after fixing. ----
-    console.log('[fs] top document.fullscreenEnabled =', document.fullscreenEnabled)
-    document.addEventListener('fullscreenchange', () => {
-      console.log('[fs] fullscreenchange', { fullscreenElement: document.fullscreenElement })
-    })
-    document.addEventListener('fullscreenerror', (e) => {
-      console.log('[fs] fullscreenerror', e)
-    })
-    // ---- END TEMP DIAGNOSTIC ----
-
     const start = async () => {
       // Prevent duplicate injection
       if (document.getElementById('my-extension-host')) {
@@ -124,21 +112,6 @@ export default defineContentScript({
         useSessionStore(pinia).hydrate(),
         useNotificationsStore(pinia).hydrate(),
       ])
-
-      // Diagnostic: shows what actually survived the reload.
-      console.log('[BetterBS] restored favorites ids:', favoritesStore.ids)
-      console.log('[BetterBS] restored history items:', useHistoryStore(pinia).items.length)
-
-      // Diagnostic: compare the two storage backends for the history key so we
-      // can see which one hydrate() actually read from.
-      try {
-        const rawLocal = localStorage.getItem('recentlyVisited')
-        const extApi = (globalThis as any).browser ?? (globalThis as any).chrome
-        const rawExt = await extApi?.storage.local.get('recentlyVisited')
-        console.log('[BetterBS] history sources — localStorage:', rawLocal, '| extension storage:', JSON.stringify(rawExt))
-      } catch (e) {
-        console.log('[BetterBS] history sources diagnostic failed:', e)
-      }
 
       app.mount(root)
     }

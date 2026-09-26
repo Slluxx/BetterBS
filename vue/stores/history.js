@@ -52,6 +52,11 @@ export const useHistoryStore = defineStore('history', {
                 season: entry.season ?? null,
                 // Never save a show without an episode: missing/invalid → 1.
                 episode: Number.isNaN(ep) || ep < 1 ? 1 : ep,
+                // Which dub this position refers to. Episode numbers are per
+                // language, so a later check must not read a German position as
+                // an English one. Absent on entries written before this was
+                // tracked; those are treated as language-agnostic.
+                language: entry.language || '',
                 time: Date.now(),
             }
 

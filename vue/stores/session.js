@@ -174,8 +174,10 @@ export const useSessionStore = defineStore('session', {
 
         // Detect an existing session (e.g. after a reload) by fetching the
         // login page: a logged-in user is redirected away from it.
+        // Returns whether a session was found, so the caller can act on the
+        // difference between "signed in" and "no idea yet".
         async restoreSession() {
-            if (this.loggedIn) return
+            if (this.loggedIn) return this.loggedIn
             try {
                 const res = await fetch(`${BASE}/login.php`, { credentials: 'same-origin', redirect: 'follow' })
                 if (res.ok) {
@@ -185,8 +187,10 @@ export const useSessionStore = defineStore('session', {
                         this.loggedIn = true
                         this.username = get(USERNAME_KEY, '')
                     }
+                    return loggedIn
                 }
             } catch { /* ignore */ }
+            return false
         },
     },
 })

@@ -60,7 +60,7 @@ function play(e, hoster) {
                     </thead>
                     <tbody>
                         <tr v-for="e in episodes" :key="e.number" class="hover"
-                            :class="e.watched ? 'opacity-60' : ''">
+                            :class="[e.watched ? 'opacity-60' : '', e.disabled ? 'opacity-50' : '']">
                             <td class="w-16">
                                 <div class="flex items-center gap-1.5">
                                     <button v-if="e.markHref" class="btn btn-xs btn-circle"
@@ -84,7 +84,13 @@ function play(e, hoster) {
                                     <button v-for="h in e.hosters" :key="h" class="btn btn-xs sm:btn-sm" @click="play(e, h)">
                                         ▶ {{ h }}
                                     </button>
-                                    <span v-if="!e.hosters.length" class="text-xs opacity-40 self-center">—</span>
+                                    <!-- The row exists for every episode of the season, but this
+                                         language may not have released this one yet. Say so, rather
+                                         than leaving a bare dash that reads as "no hosters". -->
+                                    <span v-if="e.disabled" class="text-xs opacity-60 self-center">
+                                        In dieser Sprache noch nicht verfügbar
+                                    </span>
+                                    <span v-else-if="!e.hosters.length" class="text-xs opacity-40 self-center">—</span>
                                 </div>
                             </td>
                         </tr>

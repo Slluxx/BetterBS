@@ -1,3 +1,15 @@
+// A slug is percent-encoded in the site's own URLs, and the URL parser leaves
+// invalid escapes intact — so a path segment like "100%.html" reaches
+// decodeURIComponent unchanged and makes it throw URIError. Decode defensively
+// and fall back to the raw segment.
+function safeDecode(value) {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return String(value);
+    }
+}
+
 class SeriesUrl {
     static defaults = {
         language: "de",
@@ -10,7 +22,12 @@ class SeriesUrl {
             ...defaults
         };
 
-        const parsed = new URL(url);
+        let parsed;
+        try {
+            parsed = new URL(url);
+        } catch {
+            return null;
+        }
 
         const parts = parsed.pathname
             .split("/")
@@ -39,10 +56,13 @@ class SeriesUrl {
             return result;
         }
 
-        result.title = decodeURIComponent(path[0]);
+        result.title = safeDecode(path[0]);
 
         if (path[1]) {
-            result.season = Number(path[1]) || 1;
+            const season = Number(path[1]);
+            // `Number(x) || 1` would turn season 0 into season 1, and 0 is a
+            // real season here (Specials). Only a non-numeric segment falls back.
+            result.season = Number.isFinite(season) ? season : 1;
         }
 
         if (path[2]) {

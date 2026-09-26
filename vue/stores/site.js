@@ -12,6 +12,16 @@ export const useSiteStore = defineStore('site', {
         episodes: {}, // `${slug}|${season}|${language}` -> episode list
         episodeLoading: {}, // same keys -> bool
         episodeError: {}, // same keys -> error message
+        // `${slug}|${season}` -> the languages THAT season offers. Kept per
+        // season because a show can gain a dub later (its season 1 may list
+        // only one language while a later season lists several).
+        seasonLanguages: {},
+        // `${slug}|${season}` -> the language the site defaults to for it.
+        seasonDefault: {},
+        // `${slug}|${season}|${language}` -> the language actually served. The
+        // site answers a language a season doesn't have with that season's
+        // default instead of failing, so the requested code can't be trusted.
+        episodeLanguage: {},
         allShows: null,
         securityToken: null,
         covers: {}, // slug -> cover image URL
@@ -58,6 +68,27 @@ export const useSiteStore = defineStore('site', {
             }
         },
 
+        // Asks the site which language a season defaults to. A season URL
+        // WITHOUT a language segment resolves to the site's own choice, which
+        // is the only way to learn it (every other route has to name a
+        // language). Returns { languages, default: language } and caches the
+        // default language's episodes under their real key, so adopting that
+        // language afterwards costs no extra request.
+        async loadSeason({ slug, season }, { force = false } = {}) {
+            const skey = `${slug}|${season}`
+            const url = `${BASE}/serie/${encodeURIComponent(slug)}/${season}`
+            const dom = await fetchDom(url, { force })
+            const { languages, selected } = extract.seasonLanguages(dom)
+            if (languages.length) this.seasonLanguages[skey] = languages
+            this.seasonDefault[skey] = selected
+            if (selected) {
+                const key = `${slug}|${season}|${selected}`
+                this.episodeLanguage[key] = selected
+                this.episodes[key] = extract.episodes(dom)
+            }
+            return { languages, default: selected }
+        },
+
         async loadEpisodes({ slug, season, language }, { force = false } = {}) {
             const key = `${slug}|${season}|${language}`
             if (this.episodes[key] && !force) return this.episodes[key]
@@ -66,7 +97,13 @@ export const useSiteStore = defineStore('site', {
             this.episodeError[key] = ''
             try {
                 const url = `${BASE}/serie/${encodeURIComponent(slug)}/${season}/${encodeURIComponent(language)}`
-                const list = await scrape(url, extract.episodes, { force })
+                // One fetch yields both the episode table and the season's real
+                // language list, which the overview page does not carry.
+                const dom = await fetchDom(url, { force })
+                const list = extract.episodes(dom)
+                const { languages, selected } = extract.seasonLanguages(dom)
+                if (languages.length) this.seasonLanguages[`${slug}|${season}`] = languages
+                this.episodeLanguage[key] = selected || language
                 this.episodes[key] = list
                 return list
             } catch (e) {
@@ -75,6 +112,24 @@ export const useSiteStore = defineStore('site', {
             } finally {
                 this.episodeLoading[key] = false
             }
+        },
+
+        // The languages a given season actually offers. Falls back to the show
+        // overview's list until that season's page has been fetched.
+        languagesFor(slug, season, fallback = []) {
+            return this.seasonLanguages[`${slug}|${season}`] ?? fallback
+        },
+
+        // The language the site defaults to for a season, once loadSeason has
+        // asked it. Empty string until then.
+        defaultFor(slug, season) {
+            return this.seasonDefault[`${slug}|${season}`] ?? ''
+        },
+
+        // The language the site actually served for a request. Differs from the
+        // requested one when the season didn't have it.
+        servedLanguage(slug, season, language) {
+            return this.episodeLanguage[`${slug}|${season}|${language}`] ?? language
         },
 
         async loadAllShows({ force = false } = {}) {
@@ -135,6 +190,9 @@ export const useSiteStore = defineStore('site', {
             this.episodes = {}
             this.episodeLoading = {}
             this.episodeError = {}
+            this.seasonLanguages = {}
+            this.seasonDefault = {}
+            this.episodeLanguage = {}
         },
 
         // Marks/unmarks an episode as watched via the site's watch:/unwatch:

@@ -1,3 +1,5 @@
+import { log, warn, error } from '@/utils/log.js'
+
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type !== 'BS_RUN_CHALLENGE') return
@@ -8,7 +10,7 @@ export default defineBackground(() => {
       return
     }
 
-    console.log('[background] BS_RUN_CHALLENGE', { tabId, containerId: message.containerId })
+    log('[background] BS_RUN_CHALLENGE', { tabId, containerId: message.containerId })
 
     browser.scripting
       .executeScript({
@@ -21,11 +23,26 @@ export default defineBackground(() => {
         args: [message.siteKey, message.containerId],
       })
       .then(([result]) => {
-        console.log('[background] challenge resolved', result?.result ? '(ticket)' : result?.result)
-        sendResponse({ ticket: result?.result ?? null })
+        const ticket = result?.result
+        if (ticket) {
+          log('[background] challenge resolved (ticket)')
+          sendResponse({ ticket })
+          return
+        }
+        // The challenge finished but produced no token. reCAPTCHA calls the
+        // callback with an EMPTY STRING when it declines to issue one — most
+        // often because the sitekey is not authorized for this domain, or the
+        // request looks automated enough that it is refused. Reporting that
+        // plainly beats a bare "challenge failed", which told the user nothing.
+        error('[background] challenge returned no ticket', result)
+        sendResponse({
+          error: 'reCAPTCHA returned no ticket (the site refused the challenge)'
+            + ' — the site may be rate-limiting this client',
+        })
       })
+
       .catch((err) => {
-        console.error('[background] challenge executeScript failed', err)
+        error('[background] challenge executeScript failed', err)
         sendResponse({ error: err?.message ?? String(err) })
       })
 
@@ -70,9 +87,9 @@ async function runRecaptchaChallenge(siteKey: string, containerId: string) {
   })
 
   return new Promise<string>((resolve, reject) => {
-    console.log('[recaptcha] rendering challenge in main world', containerId)
+    log('[recaptcha] rendering challenge in main world', containerId)
     const timeout = setTimeout(() => {
-      console.warn('[recaptcha] challenge timed out')
+      warn('[recaptcha] challenge timed out')
       reject(new Error('reCAPTCHA challenge timed out'))
     }, 120000)
 
@@ -83,11 +100,27 @@ async function runRecaptchaChallenge(siteKey: string, containerId: string) {
         size: 'invisible',
         callback: (ticket: string) => {
           clearTimeout(timeout)
-          console.log('[recaptcha] ticket obtained')
+          // reCAPTCHA invokes this with an EMPTY STRING when it declines to
+          // issue a token. Resolving with it would look like success all the way
+          // down to a generic "challenge failed", so name the real cause here.
+          if (!ticket) {
+            error('[recaptcha] callback returned an empty token')
+            reject(new Error('reCAPTCHA issued an empty token (challenge refused)'))
+            return
+          }
+          log('[recaptcha] ticket obtained')
           resolve(ticket)
+        },
+        // Not part of the v3 API, but honoured when present: it turns a
+        // challenge-side error into a message instead of a 2-minute timeout.
+        'error-callback': () => {
+          clearTimeout(timeout)
+          error('[recaptcha] error-callback fired')
+          reject(new Error('reCAPTCHA reported an error while solving the challenge'))
         },
       })
       window.grecaptcha.execute(widget)
     })
+
   })
 }

@@ -29,8 +29,14 @@ export const useFavoritesStore = defineStore('favorites', {
 
     actions: {
         async hydrate() {
+            // Guard the shape: storage can hand back null (a literal "null" in
+            // localStorage parses to null) and `stored.ids` would throw. This
+            // runs inside the unguarded Promise.all in content.ts, so a throw
+            // here skips app.mount() and leaves the page blank. Same guard as
+            // notifications.hydrate().
             const stored = await hydrate(STORAGE_KEY, {})
-            this.ids = normalize(stored.ids)
+            const data = stored && typeof stored === 'object' ? stored : {}
+            this.ids = normalize(data.ids)
         },
 
         save() {

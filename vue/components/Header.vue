@@ -1,6 +1,7 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useSiteStore } from '../stores/site'
+import { useSessionStore } from '../stores/session'
 import { useNotificationsStore } from '../stores/notifications'
 import SearchBox from './SearchBox.vue'
 import AccountMenu from './AccountMenu.vue'
@@ -10,6 +11,7 @@ import LoginDialog from './LoginDialog.vue'
 import SettingsDialog from './SettingsDialog.vue'
 
 const site = useSiteStore()
+const session = useSessionStore()
 const notifications = useNotificationsStore()
 
 onMounted(() => {
@@ -23,6 +25,14 @@ onMounted(() => {
 
 watch(() => site.home, (home) => {
     if (home) notifications.checkFavorites()
+})
+
+// Signing out has to drop the alerts: they were derived from the account's
+// favorites, and from here on the nav only carries the site's demo set. Signing
+// back in needs no watcher of its own — refreshFavorites() replaces site.home,
+// and the watcher above re-checks once the account's real list is in place.
+watch(() => session.loggedIn, (loggedIn) => {
+    if (!loggedIn) notifications.checkFavorites()
 })
 
 const settingsDialog = ref(null)

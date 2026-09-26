@@ -1,3 +1,5 @@
+import { log } from './log.js'
+
 // Converts a hoster's watch/play URL into an iframe-embeddable URL.
 //
 // The site's `embed.php` response only says whether its default player can be
@@ -106,11 +108,11 @@ export function toEmbedUrl(url) {
 
     const rule = RULES.find((r) => r.host.test(u.host))
     if (!rule) {
-        console.log('[embed] no embed rule for hoster', u.host)
+        log('[embed] no embed rule for hoster', u.host)
         return null
     }
 
     const result = withPath(normalized, rule.path, rule.targetHost)
-    console.log(`[embed] ${rule.name}: ${normalized} -> ${result ?? '(cannot embed — open in new tab)'}`)
+    log(`[embed] ${rule.name}: ${normalized} -> ${result ?? '(cannot embed — open in new tab)'}`)
     return result
 }

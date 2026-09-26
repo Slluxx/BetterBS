@@ -10,7 +10,8 @@ defineProps({
         <h2 class="text-lg font-bold mb-3">{{ title }}</h2>
         <ul class="menu p-0 gap-1 w-full truncate overflow-hidden">
             <li v-for="item in items" :key="item.id" class="w-full">
-                <RouterLink :to="'/show/' + item.slug" class="flex items-center gap-3 px-2 py-2 w-full">
+                <RouterLink :to="'/show/' + encodeURIComponent(item.slug)"
+                    class="flex items-center gap-3 px-2 py-2 w-full">
                     <div class="w-8 h-11 rounded bg-base-300 overflow-hidden shrink-0">
                         <img :src="item.image" class="w-full h-full object-cover" />
                     </div>

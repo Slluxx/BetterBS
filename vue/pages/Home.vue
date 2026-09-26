@@ -33,10 +33,33 @@ import NewShowsList from '../components/NewShowsList.vue'
 import { useSiteStore } from '../stores/site'
 import { useHistoryStore } from '../stores/history'
 import { useFavoritesStore } from '../stores/favorites'
+import { useSettingsStore } from '../stores/settings'
 
 const site = useSiteStore()
 const history = useHistoryStore()
 const favoritesStore = useFavoritesStore()
+const settings = useSettingsStore()
+
+// A link that opens a show in a specific dub. The language is per show (see the
+// settings store), so a tile never carries a "global" language — it either
+// names the language chosen for that show or omits it and lets the show page
+// fall back to the site's own first language. Slugs are encoded because they
+// come from scraped hrefs and may contain spaces or other reserved characters.
+function showLink(slug, { season, episode, lang } = {}) {
+    const path = '/show/' + encodeURIComponent(slug)
+    const suffix = season != null ? `/${season}` : ''
+    const ep = episode != null ? `/${episode}` : ''
+    const query = lang ? { lang } : undefined
+    return query ? { path: `${path}${suffix}${ep}`, query } : `${path}${suffix}${ep}`
+}
+
+// Short form of a language code for the tile badges. The full label lives on the
+// show page (it would need a scrape to resolve here); the code is enough to tell
+// two dubs of the same show apart.
+function shortLang(slug) {
+    const code = settings.showLanguage(slug)
+    return code ? code.toUpperCase() : ''
+}
 
 onMounted(async () => {
     history.init()
@@ -66,8 +89,15 @@ const recentlyWatched = computed(() =>
         episodeTitle: item.episode ? `Weiter bei S${item.season} E${item.episode}` : '',
         season: item.season ?? '',
         episode: item.episode ?? '',
+        // The badge is uppercased for display; the link must carry the real
+        // code, because the site matches it case-sensitively.
+        language: shortLang(item.slug),
         image: item.cover || 'https://placehold.co/300x450',
-        to: item.episode ? `/show/${item.slug}/${item.season}/${item.episode}` : `/show/${item.slug}`,
+        to: showLink(item.slug, {
+            season: item.season,
+            episode: item.episode,
+            lang: settings.showLanguage(item.slug),
+        }),
     }))
 )
 
@@ -75,12 +105,23 @@ const episodes = computed(() =>
     (site.home?.newestEpisodes ?? []).map((e, i) => ({
         id: i,
         showName: e.title,
-        episodeTitle: e.info,
+        // No separate episode title: the tile's own season/episode line below the
+        // name already shows it. (The site also has no such field — an earlier
+        // version read `e.info` here, which the extractor never produced.)
+        episodeTitle: '',
         season: e.season,
         episode: e.episode,
-        language: e.language,
+        // No language badge here. It used to carry the site's full label
+        // ("Deutsch") while the other tiles showed the bare code ("DE"); one
+        // display is used now, and the remaining ones are the short code on
+        // "Zuletzt angesehen" and the notification bar. The link still opens the
+        // dub advertised here.
+        language: '',
+
         image: site.covers[e.slug] || 'https://placehold.co/300x450',
-        to: e.season && e.episode ? `/show/${e.slug}/${e.season}/${e.episode}` : `/show/${e.slug}`,
+        // …but the link opens the dub the site is advertising here, so the tile
+        // and where it leads agree. Empty when no code could be read off the href.
+        to: showLink(e.slug, { season: e.season, episode: e.episode, lang: e.languageCode }),
     }))
 )
 
@@ -91,9 +132,12 @@ const favorites = computed(() =>
         episodeTitle: '',
         season: '',
         episode: '',
+        // No language badge: a favorite is a whole show, and the dub it opens in
+        // is the one already stored for it. The tile states nothing the show
+        // page doesn't.
         language: '',
         image: site.covers[f.slug] || 'https://placehold.co/300x450',
-        to: `/show/${f.slug}`,
+        to: showLink(f.slug, { lang: shortLang(f.slug) }),
     }))
 )
 
